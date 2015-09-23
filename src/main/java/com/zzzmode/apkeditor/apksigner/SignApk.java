@@ -122,7 +122,8 @@ public class SignApk {
 
 
     /**
-     * 此处会有bug，在jdk和android上出现的结果不同，建议只重写write(int b)即可，在android 上会调用write(byte[] b, int off, int len)导致数据出错
+     * 此处会有bug，在jdk和android上出现的结果不同，建议只重写write(int b)即可，
+     * 在android 上会调用write(int b)后再次调用write(byte[] b, int off, int len)导致数据重复出错
      *
      * Write to another stream and track how many bytes have been
      * written.
@@ -146,22 +147,19 @@ public class SignApk {
             }
             super.write(b);
             mCount++;
-            //System.out.println("write(int b)  -->>> "+mCount+"     "+HexDumpEncoder.encode(new byte[]{(byte)b}));
         }
 
 
-        @Override
-        public void write(byte[] b, int off, int len) throws IOException {
-            try {
-                mSignature.update(b, off, len);
-            } catch (SignatureException e) {
-                throw new IOException("SignatureException: " + e);
-            }
-            super.write(b, off, len);
-            mCount += len;
-            System.err.println("write(byte[] b, int off, int len)  -->>>  "+mCount);
-            //System.err.println("write(byte[] b, int off, int len)  -->>> " + mCount + "     " + HexDumpEncoder.encode(Arrays.copyOfRange(b, off, len)));
-        }
+//        @Override
+//        public void write(byte[] b, int off, int len) throws IOException {
+//            try {
+//                mSignature.update(b, off, len);
+//            } catch (SignatureException e) {
+//                throw new IOException("SignatureException: " + e);
+//            }
+//            super.write(b, off, len);
+//            mCount += len;
+//        }
 
         public int size() {
             return mCount;
@@ -216,7 +214,6 @@ public class SignApk {
             cout.write('\n');
         }
 
-        System.out.println("cout.size()   "+cout.size());
         return signature.sign();
     }
 
@@ -289,23 +286,24 @@ public class SignApk {
 
         outputJar.write(dBase64(sigPrefix));
 
-        System.out.println("sigPrefix  --> \n" + HexDumpEncoder.encode(dBase64(sigPrefix)));
+        //System.out.println("sigPrefix  --> \n" + HexDumpEncoder.encode(dBase64(sigPrefix)));
 
-        System.out.println("sign  --> \n" + HexDumpEncoder.encode(sign));
+        //System.out.println("sign  --> \n" + HexDumpEncoder.encode(sign));
 
         //System.out.println("signFile -->> signedData  \n" + HexDumpEncoder.encode(signedData));
         outputJar.write(sign);
         outputJar.closeEntry();
     }
 
+    public boolean sign(String inputFilename, String outputFilename){
+        return sign(new File(inputFilename),outputFilename);
+    }
 
-    public boolean sign(String inputFilename, String outputFilename) {
-        //String outputFilename = "/Users/zl/apkeditor/abc_222.apk";
-
+    public boolean sign(File inputFile, String outputFilename) {
         JarFile inputJar = null;
         FileOutputStream outputFile = null;
         try {
-            inputJar = new JarFile(new File(inputFilename), false);  // Don't verify.
+            inputJar = new JarFile(inputFile, false);  // Don't verify.
 
             outputFile = new FileOutputStream(outputFilename);
 
@@ -349,18 +347,4 @@ public class SignApk {
         return Base64.decodeBase64(data.getBytes("UTF-8"));
     }
 
-
-    public static void main(String[] args) throws Exception {
-
-
-        String APK_PATH = "/Users/zl/apkeditor/net_2.apk";
-
-        FileUtils.copyFile(new File("/Users/zl/apkeditor/net.apk"), new File(APK_PATH), false);
-
-        String outputFilename = "/Users/zl/apkeditor/abc_777.apk";
-//        SignApk signApk = new SignApk(Constants.privateKey, Constants.sigPrefix);
-//        boolean ret = signApk.sign(APK_PATH, outputFilename);
-//        System.out.println("sign " + ret);
-        //signApk.testSignature();
-    }
 }

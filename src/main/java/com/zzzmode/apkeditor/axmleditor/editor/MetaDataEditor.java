@@ -9,6 +9,12 @@ import com.zzzmode.apkeditor.axmleditor.utils.TypedValue;
 import java.util.List;
 
 /**
+ * 添加或修改 meta-data 信息
+ *
+ * MetaDataEditor metaDataEditor = new MetaDataEditor(doc);
+ * metaDataEditor.setEditorInfo(new MetaDataEditor.EditorInfo("UMENG_CHANNEL", "apkeditor")); // meta-data  name 和value
+ * metaDataEditor.commit();
+ *
  * Created by zl on 15/9/8.
  */
 public class MetaDataEditor extends BaseEditor<MetaDataEditor.EditorInfo> {
@@ -18,23 +24,8 @@ public class MetaDataEditor extends BaseEditor<MetaDataEditor.EditorInfo> {
         setEditor(NAME,VALUE);
     }
 
-//    private String metaName_Value ;
-//    private String metaValue_Value;
-
     private int meta_data;
-    //private int meta_name;
-    //private int meta_value = -1;
 
-//    public void setMetaName_Value(String channelName){
-//        this.metaName_Value =channelName;
-//    }
-//
-//    public void setMetaValue_Value(String channelValue){
-//        this.metaValue_Value =channelValue;
-//        if(this.metaValue_Value == null){
-//            this.metaValue_Value="";
-//        }
-//    }
 
     @Override
     public String getEditorName() {

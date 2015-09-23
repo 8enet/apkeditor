@@ -11,6 +11,17 @@ import java.util.Iterator;
 import java.util.List;
 
 /**
+ * 添加或删除apk权限
+ *
+ * 用法
+ *  PermissionEditor permissionEditor=new PermissionEditor(doc);
+ *  PermissionEditor.EditorInfo editorInfo=new PermissionEditor.EditorInfo();
+ *  editorInfo.with(new PermissionEditor.PermissionOpera("android.permission.INTERNET").remove());  //删除权限
+ *  editorInfo.with(new PermissionEditor.PermissionOpera("android.permission.WRITE_SETTINGS").add()); //添加权限
+ *  //and more ...
+ *  permissionEditor.setEditorInfo(editorInfo);
+ *
+ *
  * Created by zl on 15/9/9.
  */
 public class PermissionEditor extends BaseEditor<PermissionEditor.EditorInfo> {

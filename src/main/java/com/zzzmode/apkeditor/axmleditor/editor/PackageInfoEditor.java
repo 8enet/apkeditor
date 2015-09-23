@@ -7,7 +7,12 @@ import com.zzzmode.apkeditor.axmleditor.decode.StringBlock;
 import com.zzzmode.apkeditor.axmleditor.utils.TypedValue;
 
 /**
- * 用于修改manifest节点信息
+ * 用于修改manifest节点信息，修改包信息
+ *
+ *  PackageInfoEditor packageInfoEditor = new PackageInfoEditor(doc);
+ *  packageInfoEditor.setEditorInfo(new PackageInfoEditor.EditorInfo(12563, "ver_name_apkeditor", null)); //设置版本号、版本名和包名，不建议修改包名，会导致app 无法运行
+ *  packageInfoEditor.commit();
+ *
  * Created by zl on 15/9/8.
  */
 public class PackageInfoEditor extends BaseEditor<PackageInfoEditor.EditorInfo> {

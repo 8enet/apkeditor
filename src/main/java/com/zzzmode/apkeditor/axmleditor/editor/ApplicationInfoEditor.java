@@ -7,6 +7,12 @@ import com.zzzmode.apkeditor.axmleditor.decode.StringBlock;
 import com.zzzmode.apkeditor.axmleditor.utils.TypedValue;
 
 /**
+ * 修改<application>节点属性
+ *
+ * ApplicationInfoEditor applicationInfoEditor = new ApplicationInfoEditor(doc);
+ * applicationInfoEditor.setEditorInfo(new ApplicationInfoEditor.EditorInfo("app_name", false)); //设置app name 和是否开启debuggable
+ * applicationInfoEditor.commit();
+ *
  * Created by zl on 15/9/8.
  */
 public class ApplicationInfoEditor extends BaseEditor<ApplicationInfoEditor.EditorInfo> {

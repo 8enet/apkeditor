@@ -19,12 +19,17 @@ import java.security.KeyStore;
 public final class KeyHelper {
 
     /**
-     *   keytool -genkey -alias mytestkey -keyalg RSA  -keysize 512 -validity 40000 -keystore demo.keystore
+     * 生成keystore 命令
+     *  keytool -genkey -alias mytestkey -keyalg RSA  -keysize 512 -validity 40000 -keystore demo.keystore
      *
      *   alias mytestkey
      *   pwd 123456
      *
+     * 签名apk
      *  jarsigner -verbose -keystore demo.keystore  -digestalg SHA1 -sigalg sha1withrsa -signedjar signed.apk unsign.apk mytestkey
+     *
+     * 验证apk是否签名成功
+     *  jarsigner -verify ~/sign.apk
      */
 
 

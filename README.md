@@ -8,6 +8,7 @@
 [signapk](https://github.com/android/platform_build/tree/master/tools/signapk)   
 [AXMLEditor](https://github.com/ntop001/AXMLEditor)   
 [commons-codec](https://github.com/apache/commons-codec)   
-[zip-signer](https://code.google.com/p/zip-signer/)
+[zip-signer](https://code.google.com/p/zip-signer/)   
+[Bouncy Castle](http://www.bouncycastle.org/java.html)
 ## License
 Code is under the [GPL v3](https://gnu.org/licenses/gpl.html) [LICENSE](https://github.com/8enet/apkeditor/tree/master/LICENSE.txt)

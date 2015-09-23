@@ -23,8 +23,7 @@ public class FileUtils {
         return new FileInputStream(file);
     }
 
-    public static void copyFile(final File srcFile, final File destFile,
-                                final boolean preserveFileDate) throws IOException {
+    public static void copyFile(final File srcFile, final File destFile) throws IOException {
         checkFileRequirements(srcFile, destFile);
         if (srcFile.isDirectory()) {
             throw new IOException("Source '" + srcFile + "' exists but is a directory");
@@ -41,10 +40,10 @@ public class FileUtils {
         if (destFile.exists() && destFile.canWrite() == false) {
             throw new IOException("Destination '" + destFile + "' exists but is read-only");
         }
-        doCopyFile(srcFile, destFile, preserveFileDate);
+        doCopyFile(srcFile, destFile);
     }
 
-    private static void doCopyFile(final File srcFile, final File destFile, final boolean preserveFileDate)
+    private static void doCopyFile(final File srcFile, final File destFile)
             throws IOException {
         if (destFile.exists() && destFile.isDirectory()) {
             throw new IOException("Destination '" + destFile + "' exists but is a directory");
@@ -81,9 +80,7 @@ public class FileUtils {
             throw new IOException("Failed to copy full contents from '" +
                     srcFile + "' to '" + destFile + "' Expected length: " + srcLen + " Actual: " + dstLen);
         }
-        if (preserveFileDate) {
-            destFile.setLastModified(srcFile.lastModified());
-        }
+
     }
 
     private static void checkFileRequirements(File src, File dest) throws FileNotFoundException {

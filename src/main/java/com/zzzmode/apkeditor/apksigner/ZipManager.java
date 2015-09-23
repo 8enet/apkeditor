@@ -1,5 +1,8 @@
 package com.zzzmode.apkeditor.apksigner;
 
+
+
+import com.zzzmode.apkeditor.utils.FileUtils;
 import com.zzzmode.apkeditor.utils.IOUtils;
 
 import java.io.*;
@@ -24,10 +27,11 @@ public class ZipManager {
         try {
             fin= new FileInputStream(zipFile);
             zin= new ZipInputStream(fin);
-            ZipEntry ze = zin.getNextEntry();
+            ZipEntry ze = null;
 
             byte[] buffer = new byte[16384]; //16k
-            while (ze != null) {
+            while ((ze = zin.getNextEntry()) != null) {
+
                 // create dir if required while unzipping
                 if (ze.isDirectory()) {
                     dirChecker(ze.getName());
@@ -50,10 +54,9 @@ public class ZipManager {
                     } catch (Exception e) {
                         e.printStackTrace();
                     }finally {
-                        IOUtils.closeQuietly(bufout,fout);
+                        IOUtils.closeQuietly(zin, bufout, fout);
                     }
                 }
-                ze = zin.getNextEntry();
             }
             System.out.println("unzip -->> success !!");
         } catch (Exception e) {
@@ -70,24 +73,6 @@ public class ZipManager {
         }
     }
 
-    public static String getZipPath(String zipFilePath){
-        String path= "/Users/zl/apkeditor/"+(new File(zipFilePath).getName());
-        File file=new File(path);
-        if(!file.exists()){
-            file.mkdirs();
-        }
-        return path;
-    }
-
-
-    public static String getZipPath(){
-        String path= "/Users/zl/apkeditor";
-        File file=new File(path);
-        if(!file.exists()){
-            file.mkdirs();
-        }
-        return path;
-    }
 
     public static void deleteDir(String file) {
         deleteFile(new File(file));
@@ -143,12 +128,11 @@ public class ZipManager {
         ZipFile zipFile=null;
         try {
             zipFile =new ZipFile(file);
-            byte[] buff= creatBuffBytes();
+            byte[] buff=creatBuffBytes();
             int len;
             final int size=entryFiles.length;
             for (int i=0;i<size;i++){
                 final ZipEntry entry = zipFile.getEntry(entryFiles[i]);
-                System.out.println("extraZipEntry   "+entry);
                 InputStream stream=null;
                 FileOutputStream fos=null;
                 try {
@@ -163,7 +147,7 @@ public class ZipManager {
                     IOUtils.closeQuietly(fos, stream);
                 }
             }
-        }catch (Exception e){
+        }catch (IOException e){
             throw e;
         }finally {
             IOUtils.closeQuietly(zipFile);
@@ -177,14 +161,12 @@ public class ZipManager {
      * @param newFiles 对应要替换的文件
      * @throws IOException
      */
-    public static void replaceZipEntry(File zipFile,String[] srcFiles,String[] newFiles,boolean removeSign)throws IOException{
+    public static void replaceZipEntry(File zipFile,String[] srcFiles,String[] newFiles)throws IOException{
         File tempFile = File.createTempFile(zipFile.getName(),null);
         tempFile.delete();
         tempFile.deleteOnExit();
-        boolean renameOk = zipFile.renameTo(tempFile);
-        if (!renameOk) {
-            throw new RuntimeException("could not rename the file " + zipFile.getAbsolutePath() + " to " + tempFile.getAbsolutePath());
-        }
+
+        FileUtils.copyFile(zipFile,tempFile);
         FileInputStream fis=null;
         FileOutputStream fos=null;
         ZipInputStream zin =null;
@@ -199,7 +181,6 @@ public class ZipManager {
 
             final int size = (srcFiles == null ? 0 : srcFiles.length);
             int dels = 0;
-
             byte[] buff = creatBuffBytes();
             int len;
             while (entry != null) {
@@ -213,28 +194,26 @@ public class ZipManager {
                         }
                     }
                     if (rp >= 0) {
-                        zout.putNextEntry(new ZipEntry(name));
                         FileInputStream fis2=null;
                         try {
+                            zout.putNextEntry(new ZipEntry(name));
                             fis2 = new FileInputStream(newFiles[rp]);
                             while ((len = fis2.read(buff)) > 0) {
                                 zout.write(buff, 0, len);
                             }
+                            zout.closeEntry();
                         } catch (IOException e) {
+                            e.printStackTrace();
                             throw e;
                         } finally {
                             IOUtils.closeQuietly(fis2);
                         }
                         dels++;
-                        zout.closeEntry();
                         entry = zin.getNextEntry();
                         continue;
                     }
                 }
-                if(removeSign && name.startsWith("META-INF/")){
-                    entry = zin.getNextEntry();
-                    continue;
-                }
+
                 zout.putNextEntry(new ZipEntry(name));
                 while ((len = zin.read(buff)) > 0) {
                     zout.write(buff, 0, len);
@@ -243,13 +222,13 @@ public class ZipManager {
                 entry = zin.getNextEntry();
             }
             zout.finish();
-        }catch (Exception e){
+        }catch (IOException e){
+            e.printStackTrace();
             throw e;
         }finally {
             IOUtils.closeQuietly(zin, zout,fis,fos);
             tempFile.delete();
         }
-
     }
 
 
@@ -263,10 +242,9 @@ public class ZipManager {
         File tempFile = File.createTempFile(zipFile.getName(),null);
         tempFile.delete();
         tempFile.deleteOnExit();
-        boolean renameOk = zipFile.renameTo(tempFile);
-        if (!renameOk) {
-            throw new RuntimeException("could not rename the file " + zipFile.getAbsolutePath() + " to " + tempFile.getAbsolutePath());
-        }
+
+
+        FileUtils.copyFile(zipFile,tempFile);
 
         FileInputStream fis=null;
         FileOutputStream fos=null;
@@ -282,7 +260,7 @@ public class ZipManager {
             final int delSize = (files == null ? 0 : files.length);
             int dels = 0;
 
-            byte[] buff= creatBuffBytes();
+            byte[] buff=creatBuffBytes();
             int len;
             while (entry != null) {
                 String name = entry.getName();
@@ -308,7 +286,7 @@ public class ZipManager {
                 entry = zin.getNextEntry();
             }
             zout.finish();
-        }catch (Exception e){
+        }catch (IOException e){
             throw e;
         }finally {
             IOUtils.closeQuietly(zin, zout,fis,fos);
@@ -331,10 +309,8 @@ public class ZipManager {
         File tempFile = File.createTempFile(zipFile.getName(), null);
         tempFile.delete();
         tempFile.deleteOnExit();
-        boolean renameOk=zipFile.renameTo(tempFile);
-        if (!renameOk) {
-            throw new RuntimeException("could not rename the file "+zipFile.getAbsolutePath()+" to "+tempFile.getAbsolutePath());
-        }
+
+        FileUtils.copyFile(zipFile, tempFile);
 
         FileInputStream fis=null;
         FileOutputStream fos=null;
@@ -368,7 +344,7 @@ public class ZipManager {
                 entry = zin.getNextEntry();
             }
             zout.finish();
-        }catch (Exception e){
+        }catch (IOException e){
             throw e;
         }finally {
             IOUtils.closeQuietly(zin, zout,fis,fos);
@@ -389,23 +365,18 @@ public class ZipManager {
         File tempFile = File.createTempFile(zipFile.getName(),null);
         tempFile.delete();
         tempFile.deleteOnExit();
-        boolean renameOk = zipFile.renameTo(tempFile);
-        if (!renameOk) {
-            throw new RuntimeException("could not rename the file " + zipFile.getAbsolutePath() + " to " + tempFile.getAbsolutePath());
-        }
 
-        FileInputStream fis=null;
-        FileOutputStream fos=null;
+        FileUtils.copyFile(zipFile,tempFile);
+
         ZipInputStream zin =null;
         ZipOutputStream zout =null;
 
         try {
-            fis=new FileInputStream(tempFile);
-            fos=new FileOutputStream(zipFile);
-            zin = new ZipInputStream(fis);
-            zout = new ZipOutputStream(fos);
+            zin = new ZipInputStream(new FileInputStream(tempFile));
+            zout = new ZipOutputStream(new FileOutputStream(zipFile));
             ZipEntry entry = zin.getNextEntry();
 
+            zin.close();
             byte[] buff = creatBuffBytes();
             String name=null;
             while (entry != null) {
@@ -423,36 +394,38 @@ public class ZipManager {
                 entry = zin.getNextEntry();
             }
             zout.finish();
-        }catch (Exception e){
+        }catch (IOException e){
             e.printStackTrace();
             throw e;
         }finally {
-            IOUtils.closeQuietly(zin, zout,fis,fos);
+            IOUtils.closeQuietly(zin, zout);
             tempFile.delete();
         }
+
     }
 
 
+    /**
+     * 添加文件到zip 包
+     * @param zipFile 目标zip 文件
+     * @param entryNames 添加的entry文件名
+     * @param mapFiles entry映射的外部文件路径
+     * @throws IOException
+     */
     public static void addEntrys(File zipFile,String[] entryNames,String[] mapFiles) throws IOException {
         File tempFile = File.createTempFile(zipFile.getName(),null);
         tempFile.delete();
         tempFile.deleteOnExit();
-        boolean renameOk = zipFile.renameTo(tempFile);
-        if (!renameOk) {
-            throw new RuntimeException("could not rename the file " + zipFile.getAbsolutePath() + " to " + tempFile.getAbsolutePath());
-        }
-        FileInputStream fis=null;
-        FileOutputStream fos=null;
+
+
         ZipInputStream zin =null;
         ZipOutputStream zout =null;
 
         try {
-            fis = new FileInputStream(tempFile);
-            fos = new FileOutputStream(zipFile);
-            zin = new ZipInputStream(fis);
-            zout = new ZipOutputStream(fos);
+            zin = new ZipInputStream(new FileInputStream(tempFile));
+            zout = new ZipOutputStream(new FileOutputStream(zipFile));
+            zout.close();
             ZipEntry entry = zin.getNextEntry();
-
 
             final int size = (entryNames == null ? 0 : entryNames.length);
 
@@ -487,7 +460,7 @@ public class ZipManager {
         }catch (Exception e){
             throw e;
         }finally {
-            IOUtils.closeQuietly(zin, zout,fis,fos);
+            IOUtils.closeQuietly(zin, zout);
             tempFile.delete();
         }
     }
