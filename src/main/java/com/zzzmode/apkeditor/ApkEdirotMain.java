@@ -17,7 +17,6 @@ public class ApkEdirotMain {
         //如何生成 key，具体方法见KeyHelper
         ApkEditor editor=new ApkEditor(KeyHelper.privateKey,KeyHelper.sigPrefix);
 
-        System.out.println(ClassLoader.getSystemClassLoader().getResource("tap_unsign.apk"));
         File unsignFile=new File(ClassLoader.getSystemClassLoader().getResource("tap_unsign.apk").toURI());
         File tempFile = File.createTempFile("tap_sign", ".apk",ApkEditor.getWorkDir());
 
@@ -27,7 +26,6 @@ public class ApkEdirotMain {
         editor.setAppIcon(new File(ClassLoader.getSystemClassLoader().getResource("ic_launcher.png").toURI()).getAbsolutePath());
         final boolean b = editor.create();
         System.out.println("apkeditor rebuild "+b+"    output apk path "+tempFile.getAbsolutePath());
-        unsignFile.delete();
     }
 
 }
