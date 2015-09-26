@@ -18,9 +18,6 @@ package com.zzzmode.apkeditor.apksigner;
 
 
 import com.zzzmode.apkeditor.utils.Base64;
-import com.zzzmode.apkeditor.utils.FileUtils;
-import com.zzzmode.apkeditor.utils.HexDumpEncoder;
-
 
 import java.io.*;
 import java.security.*;
@@ -49,8 +46,14 @@ import java.util.regex.Pattern;
  *  如何生成privateKey 和 sigPrefix 见{@see KeyHelper}
  */
 public class SignApk {
-    private static final String CERT_SF_NAME = "META-INF/CERT.SF";
-    private static final String CERT_RSA_NAME = "META-INF/CERT.RSA";
+    private static final String META_INF = "META-INF/";
+
+    // prefix for new signature-related files in META-INF directory
+    private static final String SIG_PREFIX = META_INF + "SIG-";
+
+
+    private static final String CERT_SF_NAME = META_INF+"CERT.SF";
+    private static final String CERT_RSA_NAME = META_INF+"CERT.RSA";
 
 
     // Files matching this pattern are not copied to the output.
@@ -345,6 +348,69 @@ public class SignApk {
 
     private static byte[] dBase64(String data) throws UnsupportedEncodingException {
         return Base64.decodeBase64(data.getBytes("UTF-8"));
+    }
+
+
+    public static boolean verifyJar(String jarName)
+            throws Exception {
+        boolean anySigned = false;
+        JarFile jf = null;
+
+        try {
+            jf = new JarFile(jarName, true);
+            Vector<JarEntry> entriesVec = new Vector<JarEntry>();
+            byte[] buffer = new byte[8192];
+
+            Enumeration<JarEntry> entries = jf.entries();
+            while (entries.hasMoreElements()) {
+                JarEntry je = entries.nextElement();
+                entriesVec.addElement(je);
+                InputStream is = null;
+                try {
+                    is = jf.getInputStream(je);
+                    int n;
+                    while ((n = is.read(buffer, 0, buffer.length)) != -1) {
+                        // we just read. this will throw a SecurityException
+                        // if  a signature/digest check fails.
+                    }
+                } finally {
+                    if (is != null) {
+                        is.close();
+                    }
+                }
+            }
+
+            Manifest man = jf.getManifest();
+
+            if (man != null) {
+                Enumeration<JarEntry> e = entriesVec.elements();
+                while (e.hasMoreElements()) {
+                    JarEntry je = e.nextElement();
+                    CodeSigner[] signers = je.getCodeSigners();
+                    //boolean isSigned = (signers != null);
+                    anySigned |= (signers != null);
+                }
+            }
+
+            if (man == null){
+                System.out.println("no manifest.");
+                return false;
+            }
+
+            if (anySigned) {
+                System.out.println("jar verified.");
+            } else {
+                System.out.println("jar is unsigned. (signatures missing or not parsable)");
+            }
+            return anySigned;
+        } catch (Exception e) {
+            System.out.println("jarsigner: " + e);
+        } finally {
+            if (jf != null) {
+                jf.close();
+            }
+        }
+        return false;
     }
 
 }

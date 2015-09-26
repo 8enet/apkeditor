@@ -140,7 +140,11 @@ public class ApkEditor {
             //重新签名
             SignApk signApk = new SignApk(privateKey,sigPrefix);
 
-            return signApk.sign(tmpFile.getAbsolutePath(), outFile);
+            boolean signed= signApk.sign(tmpFile.getAbsolutePath(), outFile);
+            if (signed){
+                //verify signed apk
+                return SignApk.verifyJar(outFile);
+            }
         } catch (Exception e) {
             throw e;
         } finally {
@@ -151,6 +155,7 @@ public class ApkEditor {
                 newXML.delete();
             }
         }
+        return false;
     }
 
     public static File getWorkDir(){
