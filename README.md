@@ -1,6 +1,5 @@
 # ApkEditor
-[![Build Status](https://travis-ci.org/8enet/apkeditor.svg?branch=master)](https://travis-ci.org/8enet/apkeditor)   
- 
+[![Build Status](https://travis-ci.org/8enet/apkeditor.svg?branch=master)](https://travis-ci.org/8enet/apkeditor)  [![Software License](https://img.shields.io/badge/license-GPLv3-blue.svg)](LICENSE)
     
 可以运行于jdk和android平台的apk修改器，支持修改AndroidManifest.xml文件，添加删除节点数据，不依赖aapt和jdk即可生成和签名apk.
 
