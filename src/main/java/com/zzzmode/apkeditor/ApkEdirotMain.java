@@ -2,8 +2,11 @@ package com.zzzmode.apkeditor;
 
 
 import com.zzzmode.apkeditor.apksigner.KeyHelper;
+import com.zzzmode.apkeditor.axmleditor.asrc.*;
+import com.zzzmode.apkeditor.utils.*;
 
-import java.io.File;
+import java.io.*;
+import java.nio.*;
 
 /**
  * Created by zl on 15/9/8.
@@ -12,6 +15,10 @@ public class ApkEdirotMain {
 
 
     public static void main(String[] args)throws Exception{
+        if(true){
+            aaa();
+            return;
+        }
 
         //test code
         //如何生成 key，具体方法见KeyHelper
@@ -28,4 +35,15 @@ public class ApkEdirotMain {
         System.out.println("apkeditor rebuild "+b+"    output apk path "+tempFile.getAbsolutePath());
     }
 
+
+
+    private static void aaa()throws Exception{
+        File f=new File(ClassLoader.getSystemClassLoader().getResource("resources.arsc").toURI());
+        ApkResourceFinder finder=new ApkResourceFinder();
+
+
+
+        System.out.println(finder.initialize(f));
+
+    }
 }
