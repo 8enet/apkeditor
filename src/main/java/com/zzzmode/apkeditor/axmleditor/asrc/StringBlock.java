@@ -1,9 +1,19 @@
 package com.zzzmode.apkeditor.axmleditor.asrc;
 
-import java.io.*;
-import java.nio.*;
-import java.nio.charset.*;
-import java.util.*;
+import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.nio.CharBuffer;
+import java.nio.charset.CharacterCodingException;
+import java.nio.charset.Charset;
+import java.nio.charset.CharsetDecoder;
+import java.nio.charset.CharsetEncoder;
+import java.util.List;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.io.ByteArrayOutputStream;
+
+
+import org.jf.dexlib.Util.Utf8Utils;
 
 public class StringBlock
 {
@@ -82,124 +92,136 @@ public class StringBlock
     public void getStrings(List<String> list){
         int size=getSize();
         for(int i=0;i<size;i++)
-            list.add(escapeString(getString(i)));
+            list.add(escapeSequence(getString(i)));
     }
 
-    public static String escapeString(String value) {
-        int len = value.length();
-        StringBuilder sb = new StringBuilder(len * 3 / 2);
 
-        for (int i = 0; i < len; i++) {
-            char c = value.charAt(i);
+    public static String escapeSequence(String string){
+        int len=string.length();
+        StringBuilder sb = new StringBuilder(len);
+        for(int i=0;i<len;i++){
+            char c=string.charAt(i);
+            if(c == '\\'){
+                if(i>=len-1)
+                    throw new IllegalArgumentException( "escape Sequence error: "+c);
+                char nextChar = string.charAt(++i);
+                switch(nextChar){
+                    case 'b':
+                        sb.append('\b'); break;
+                    case 't':
+                        sb.append('\t'); break;
+                    case 'n':
+                        sb.append('\n'); break;
+                    case 'r':
+                        sb.append('\r'); break;
+                    case '\'':
+                        sb.append('\''); break;
+                    case '\"':
+                        sb.append('\"'); break;
+                    case '\\':
+                        sb.append('\\'); break;
+                    case 'u':
+                        i++;
+                        if(i>len-4)
+                            throw new IllegalArgumentException( "unicode error: "+string.substring(i-2));
 
-            if ((c >= ' ') && (c < 0x7f)) {
-                if ((c == '\'') || (c == '\"') || (c == '\\')) {
-                    sb.append('\\');
+                        int code=digit(string.charAt(i++))<<12
+                                |digit(string.charAt(i++))<<8
+                                |digit(string.charAt(i++))<<4
+                                |digit(string.charAt(i));
+                        sb.append((char)code);
+                        break;
+                    default:
+                        throw new IllegalArgumentException( "escape Sequence error: "+string.substring(i-1));
                 }
+            }else{
                 sb.append(c);
-                continue;
-            } else if (c <= 0x7f) {
-                switch (c) {
-                    case '\n': sb.append("\\n"); continue;
-                    case '\r': sb.append("\\r"); continue;
-                    case '\t': sb.append("\\t"); continue;
-                }
-            }
-            /*
-            if(c>=0x4e00&&c<=0x9fff){
-                sb.append(c);
-                continue;
-            }
-            //ch sym table
-            if(c>=0xfe30&&c<=0xffa0){
-                sb.append(c);
-                continue;
             }
 
-            sb.append("\\u");
-            sb.append(Character.forDigit(c >> 12, 16));
-            sb.append(Character.forDigit((c >> 8) & 0x0f, 16));
-            sb.append(Character.forDigit((c >> 4) & 0x0f, 16));
-            sb.append(Character.forDigit(c & 0x0f, 16));
-            */
-            sb.append(c);
         }
-
         return sb.toString();
     }
 
-//    public void write(LEDataOutputStream out)throws IOException{
-//        List<String> list=new ArrayList<String>(getSize());
-//        getStrings(list);
-//        write(list,out);
-//    }
-//
-//
-//    public void write(List<String> list,LEDataOutputStream out)throws IOException{
-//
-//
-//        ByteArrayOutputStream outBuf=new ByteArrayOutputStream();
-//        LEDataOutputStream led=new LEDataOutputStream(outBuf);
-//        // stringCount
-//        int size=list.size();
-//
-//        //m_stringOffsets
-//        int[] offset=new int[size];
-//        int len=0;
-//
-//        //m_strings
-//        ByteArrayOutputStream bOut=new ByteArrayOutputStream();
-//        LEDataOutputStream mStrings=new LEDataOutputStream(bOut);
-//        for(int i=0;i<size;i++){
-//            offset[i]=len;
-//            String var=Utf8Utils.escapeSequence(list.get(i));
-//            char[] charbuf=var.toCharArray();
-//            mStrings.writeShort((short)charbuf.length);
-//            mStrings.writeCharArray(charbuf);
-//            mStrings.writeShort((short)0);
-//            len+=charbuf.length*2+4;
-//        }
-//
-//        int m_strings_size=bOut.size();
-//        int size_mod=m_strings_size%4;//m_strings_size%4
-//        //padding 0
-//        if(size_mod !=0){
-//            for(int i=0;i<4-size_mod;i++){
-//                bOut.write(0);
-//            }
-//            m_strings_size+=4-size_mod;
-//        }
-//        byte[] m_strings=bOut.toByteArray();
-//
-//
-//
-//        System.out.println("string chunk size: "+chunkSize);
-//
-//        led.writeInt(size);
-//        led.writeInt(styleOffsetCount);
-//        led.writeInt(flags);
-//
-//        led.writeInt(stringsOffset);
-//        led.writeInt(stylesOffset);
-//
-//        led.writeIntArray(offset);
-//        if(styleOffsetCount!=0){
-//            System.out.println("write stylesOffset");
-//            led.writeIntArray(m_styleOffsets);
-//        }
-//
-//        led.writeFully(m_strings);
-//
-//        if(m_styles!=null){
-//            System.out.println("write m_styles");
-//            led.writeIntArray(m_styles);
-//        }
-//        out.writeInt(CHUNK_STRINGBLOCK);
-//
-//        byte[] b=outBuf.toByteArray();
-//        out.writeInt(b.length+8);
-//        out.writeFully(b);
-//    }
+    private static int digit(char c) {
+        int result = Character.digit(c, 16);
+        if (result<0||result > 15) {
+            throw new IllegalArgumentException( "illegal not hex character: "+c);
+        }
+        return result;
+    }
+
+    public void write(LEDataOutputStream out)throws IOException{
+        List<String> list=new ArrayList<String>(getSize());
+        getStrings(list);
+        write(list,out);
+    }
+
+
+    public void write(List<String> list,LEDataOutputStream out)throws IOException{
+
+
+        ByteArrayOutputStream outBuf=new ByteArrayOutputStream();
+        LEDataOutputStream led=new LEDataOutputStream(outBuf);
+        // stringCount
+        int size=list.size();
+
+        //m_stringOffsets
+        int[] offset=new int[size];
+        int len=0;
+
+        //m_strings
+        ByteArrayOutputStream bOut=new ByteArrayOutputStream();
+        LEDataOutputStream mStrings=new LEDataOutputStream(bOut);
+        for(int i=0;i<size;i++){
+            offset[i]=len;
+            String var=Utf8Utils.escapeString(list.get(i));
+            char[] charbuf=var.toCharArray();
+            mStrings.writeShort((short)charbuf.length);
+            mStrings.writeCharArray(charbuf);
+            mStrings.writeShort((short)0);
+            len+=charbuf.length*2+4;
+        }
+
+        int m_strings_size=bOut.size();
+        int size_mod=m_strings_size%4;//m_strings_size%4
+        //padding 0
+        if(size_mod !=0){
+            for(int i=0;i<4-size_mod;i++){
+                bOut.write(0);
+            }
+            m_strings_size+=4-size_mod;
+        }
+        byte[] m_strings=bOut.toByteArray();
+
+
+
+        System.out.println("string chunk size: "+chunkSize);
+
+        led.writeInt(size);
+        led.writeInt(styleOffsetCount);
+        led.writeInt(flags);
+
+        led.writeInt(stringsOffset);
+        led.writeInt(stylesOffset);
+
+        led.writeIntArray(offset);
+        if(styleOffsetCount!=0){
+            System.out.println("write stylesOffset");
+            led.writeIntArray(m_styleOffsets);
+        }
+
+        led.writeFully(m_strings);
+
+        if(m_styles!=null){
+            System.out.println("write m_styles");
+            led.writeIntArray(m_styles);
+        }
+        out.writeInt(CHUNK_STRINGBLOCK);
+
+        byte[] b=outBuf.toByteArray();
+        out.writeInt(b.length+8);
+        out.writeFully(b);
+    }
 
 
     public int getChunkSize(){

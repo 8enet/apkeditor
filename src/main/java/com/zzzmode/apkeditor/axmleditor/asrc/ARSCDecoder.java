@@ -1,5 +1,5 @@
-package com.zzzmode.apkeditor.axmleditor.asrc;
 
+package com.zzzmode.apkeditor.axmleditor.asrc;
 
 
 import java.io.*;
@@ -42,6 +42,23 @@ public class ARSCDecoder
         readPackage();
     }
 
+    public void write(List<String> list,OutputStream out)throws IOException{
+        write(list,new LEDataOutputStream(out));
+    }
+
+    public void write(List<String> list,LEDataOutputStream out)throws IOException{
+
+
+        ByteArrayOutputStream baos=new ByteArrayOutputStream();
+        LEDataOutputStream buf=new LEDataOutputStream(baos);
+        buf.writeInt(packageCount);
+        mTableStrings.write(list,buf);
+        writePackage(buf);
+//write to out
+        out.writeInt(ARSC_CHUNK_TYPE);
+        out.writeInt(baos.size()+8);
+        out.writeFully(baos.toByteArray());
+    }
 
 
     public static ARSCDecoder read(InputStream in)throws IOException{
@@ -53,37 +70,42 @@ public class ARSCDecoder
     }
 
     public static void main(String[] args)throws Exception{
-
-        File arscFile=new File(ClassLoader.getSystemClassLoader().getResource("resources.arsc").toURI());
-        FileInputStream file=new FileInputStream(arscFile);
+        if(args.length>1){
+        FileInputStream file=new FileInputStream(args[0].trim());
         ARSCDecoder arsc=ARSCDecoder.read(file);
         StringBlock sb=arsc.mTableStrings;
         List<String> list=new ArrayList<String>();
         sb.getStrings(list);
               for(int i=0;i<list.size();i++)
                 System.out.println(i+" "+list.get(i));
-
-
+        ByteArrayOutputStream out=new ByteArrayOutputStream();
+        arsc.write(list,new LEDataOutputStream(out));
+        FileOutputStream outFile=new FileOutputStream(args[1].trim());
+        outFile.write(out.toByteArray());
+        outFile.close();
+        }else{
+            System.out.println("<input> <output>" );
+        }
 
     }
 
 
     
-//    public void writePackage( LEDataOutputStream out)throws IOException{
-//        /*
-//        out.writeShort((short)CHECK_PACKAGE);
-//        out.writeShort((short)package_unknow1);
-//        out.writeInt(package_chunksize);
-//        out.writeInt(id);
-//        //int start=out.size();
-//        out.writeNulEndedString(name,128,true);
-//       // System.out.println("len "+(out.size()-start));
-//        out.writeFully(buf);
-//        mTypeNames.write(out);
-//        mSpecNames.write(out);
-//        */
-//        out.writeFully(byteOut.toByteArray());
-//    }
+    public void writePackage( LEDataOutputStream out)throws IOException{
+        /*
+        out.writeShort((short)CHECK_PACKAGE);
+        out.writeShort((short)package_unknow1);
+        out.writeInt(package_chunksize);
+        out.writeInt(id);
+        //int start=out.size();
+        out.writeNulEndedString(name,128,true);
+       // System.out.println("len "+(out.size()-start));
+        out.writeFully(buf);
+        mTypeNames.write(out);
+        mSpecNames.write(out);
+        */
+        out.writeFully(byteOut.toByteArray());
+    }
 
 
     private void readPackage() throws IOException {
@@ -117,5 +139,8 @@ public class ARSCDecoder
         if (type != expectedType)
             throw new IOException(String.format("Invalid chunk type: expected=0x%08x, got=0x%08x", new Object[] { Integer.valueOf(expectedType), Short.valueOf((short)type) }));
     }
+
+
+
 
 }
